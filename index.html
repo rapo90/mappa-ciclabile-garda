@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mappa Percorsi Ciclistici - Basso Lago di Garda</title>
+    <meta name="description" content="Mappa interattiva dei percorsi ciclistici nell'area del Basso Lago di Garda con informazioni sul tipo di fondo stradale">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+
+    <!-- Leaflet MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+
+    <!-- Leaflet Elevation CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <h1 class="app-title" data-i18n="app_title">Mappa Percorsi Ciclistici</h1>
+            <div class="language-switcher">
+                <button class="lang-btn active" data-lang="it" title="Italiano">IT</button>
+                <button class="lang-btn" data-lang="en" title="English">EN</button>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-content">
+                    <!-- Filters Section -->
+                    <section class="sidebar-section">
+                        <h2 class="section-title" data-i18n="filters">Filtri</h2>
+                        <div class="filter-group">
+                            <label class="filter-option">
+                                <input type="radio" name="surface-filter" value="all" checked>
+                                <span data-i18n="all_surfaces">Tutti i fondi</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="radio" name="surface-filter" value="asphalt">
+                                <span data-i18n="filter_asphalt_only">Solo asfalto</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="radio" name="surface-filter" value="unpaved">
+                                <span data-i18n="filter_with_unpaved">Con sterrati</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="radio" name="surface-filter" value="trails">
+                                <span data-i18n="filter_with_trails">Con sentieri</span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <!-- Routes List Section -->
+                    <section class="sidebar-section">
+                        <h2 class="section-title" data-i18n="routes_list">Elenco percorsi</h2>
+                        <label class="toggle-option">
+                            <input type="checkbox" id="showAllRoutes" checked>
+                            <span data-i18n="show_all_routes">Mostra tutti i percorsi</span>
+                        </label>
+                        <div class="routes-list" id="routesList">
+                            <!-- Routes will be dynamically added here -->
+                        </div>
+                    </section>
+
+                    <!-- POI Section -->
+                    <section class="sidebar-section">
+                        <h2 class="section-title" data-i18n="show_poi">Punti di interesse</h2>
+                        <div class="poi-filters">
+                            <label class="toggle-option">
+                                <input type="checkbox" class="poi-toggle" data-poi-type="partenza_arrivo" checked>
+                                <img src="icons/partenza.svg" alt="" class="poi-icon-small">
+                                <span data-i18n="poi_start">Partenze/Arrivi</span>
+                            </label>
+                            <label class="toggle-option">
+                                <input type="checkbox" class="poi-toggle" data-poi-type="vista" checked>
+                                <img src="icons/vista.svg" alt="" class="poi-icon-small">
+                                <span data-i18n="poi_view">Punti panoramici</span>
+                            </label>
+                            <label class="toggle-option">
+                                <input type="checkbox" class="poi-toggle" data-poi-type="fontana" checked>
+                                <img src="icons/fontana.svg" alt="" class="poi-icon-small">
+                                <span data-i18n="poi_fountain">Fontane</span>
+                            </label>
+                            <label class="toggle-option">
+                                <input type="checkbox" class="poi-toggle" data-poi-type="ristoro" checked>
+                                <img src="icons/ristoro.svg" alt="" class="poi-icon-small">
+                                <span data-i18n="poi_restaurant">Ristori</span>
+                            </label>
+                            <label class="toggle-option">
+                                <input type="checkbox" class="poi-toggle" data-poi-type="bike_service" checked>
+                                <img src="icons/bike-service.svg" alt="" class="poi-icon-small">
+                                <span data-i18n="poi_bike_service">Assistenza bici</span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <!-- Legend Section -->
+                    <section class="sidebar-section legend-section">
+                        <h2 class="section-title" data-i18n="legend">Legenda</h2>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <span class="legend-line legend-asphalt"></span>
+                                <span data-i18n="legend_asphalt">Asfalto</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-line legend-unpaved"></span>
+                                <span data-i18n="legend_unpaved">Sterrato</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-line legend-trail"></span>
+                                <span data-i18n="legend_trail">Sentiero</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- Map Container -->
+            <div class="map-container">
+                <div id="map"></div>
+
+                <!-- Route Info Panel (appears when route is selected) -->
+                <div class="route-info-panel" id="routeInfoPanel">
+                    <button class="close-panel" id="closeRouteInfo" aria-label="Chiudi">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div class="route-info-content" id="routeInfoContent">
+                        <!-- Route info will be dynamically added here -->
+                    </div>
+                </div>
+
+                <!-- Floating Legend (for larger screens) -->
+                <div class="floating-legend" id="floatingLegend">
+                    <div class="legend-item">
+                        <span class="legend-line legend-asphalt"></span>
+                        <span data-i18n="legend_asphalt">Asfalto</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-line legend-unpaved"></span>
+                        <span data-i18n="legend_unpaved">Sterrato</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-line legend-trail"></span>
+                        <span data-i18n="legend_trail">Sentiero</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <span data-i18n="loading">Caricamento...</span>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Leaflet GPX -->
+    <script src="https://unpkg.com/leaflet-gpx@1.7.0/gpx.js"></script>
+
+    <!-- Leaflet MarkerCluster -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <!-- Leaflet Elevation -->
+    <script src="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.js"></script>
+
+    <!-- Polyline Offset -->
+    <script src="https://unpkg.com/leaflet-polylineoffset@1.1.1/leaflet.polylineoffset.js"></script>
+
+    <!-- D3.js (required for elevation chart) -->
+    <script src="https://unpkg.com/d3@7.8.5/dist/d3.min.js"></script>
+
+    <!-- App Modules -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

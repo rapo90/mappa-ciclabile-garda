@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Cycling Routes Test" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Anello di Peschiera</name>
+    <desc>Percorso completamente asfaltato intorno a Peschiera del Garda</desc>
+  </metadata>
+  <trk>
+    <name>Anello di Peschiera</name>
+    <type>cycling</type>
+    <trkseg>
+      <!-- Start: Peschiera del Garda -->
+      <trkpt lat="45.4395" lon="10.6870"><ele>67</ele></trkpt>
+      <trkpt lat="45.4410" lon="10.6885"><ele>68</ele></trkpt>
+      <trkpt lat="45.4425" lon="10.6910"><ele>70</ele></trkpt>
+      <trkpt lat="45.4445" lon="10.6935"><ele>72</ele></trkpt>
+      <trkpt lat="45.4470" lon="10.6960"><ele>75</ele></trkpt>
+      <trkpt lat="45.4495" lon="10.6990"><ele>78</ele></trkpt>
+      <trkpt lat="45.4520" lon="10.7020"><ele>82</ele></trkpt>
+      <trkpt lat="45.4545" lon="10.7055"><ele>85</ele></trkpt>
+      <trkpt lat="45.4570" lon="10.7090"><ele>88</ele></trkpt>
+      <trkpt lat="45.4590" lon="10.7130"><ele>92</ele></trkpt>
+      <!-- Heading north along the lake -->
+      <trkpt lat="45.4615" lon="10.7160"><ele>90</ele></trkpt>
+      <trkpt lat="45.4640" lon="10.7180"><ele>88</ele></trkpt>
+      <trkpt lat="45.4670" lon="10.7195"><ele>85</ele></trkpt>
+      <trkpt lat="45.4700" lon="10.7200"><ele>83</ele></trkpt>
+      <trkpt lat="45.4730" lon="10.7195"><ele>80</ele></trkpt>
+      <trkpt lat="45.4760" lon="10.7180"><ele>78</ele></trkpt>
+      <trkpt lat="45.4790" lon="10.7155"><ele>75</ele></trkpt>
+      <trkpt lat="45.4815" lon="10.7125"><ele>73</ele></trkpt>
+      <trkpt lat="45.4835" lon="10.7090"><ele>70</ele></trkpt>
+      <trkpt lat="45.4850" lon="10.7050"><ele>68</ele></trkpt>
+      <!-- Turning east -->
+      <trkpt lat="45.4860" lon="10.7010"><ele>72</ele></trkpt>
+      <trkpt lat="45.4865" lon="10.6965"><ele>76</ele></trkpt>
+      <trkpt lat="45.4860" lon="10.6920"><ele>80</ele></trkpt>
+      <trkpt lat="45.4850" lon="10.6875"><ele>85</ele></trkpt>
+      <trkpt lat="45.4835" lon="10.6835"><ele>90</ele></trkpt>
+      <trkpt lat="45.4815" lon="10.6800"><ele>88</ele></trkpt>
+      <trkpt lat="45.4790" lon="10.6770"><ele>85</ele></trkpt>
+      <trkpt lat="45.4760" lon="10.6750"><ele>82</ele></trkpt>
+      <trkpt lat="45.4730" lon="10.6735"><ele>80</ele></trkpt>
+      <trkpt lat="45.4695" lon="10.6725"><ele>78</ele></trkpt>
+      <!-- Heading south -->
+      <trkpt lat="45.4660" lon="10.6720"><ele>75</ele></trkpt>
+      <trkpt lat="45.4625" lon="10.6725"><ele>73</ele></trkpt>
+      <trkpt lat="45.4590" lon="10.6735"><ele>72</ele></trkpt>
+      <trkpt lat="45.4555" lon="10.6750"><ele>70</ele></trkpt>
+      <trkpt lat="45.4520" lon="10.6770"><ele>69</ele></trkpt>
+      <trkpt lat="45.4485" lon="10.6795"><ele>68</ele></trkpt>
+      <trkpt lat="45.4455" lon="10.6820"><ele>67</ele></trkpt>
+      <trkpt lat="45.4425" lon="10.6845"><ele>67</ele></trkpt>
+      <!-- Return to start -->
+      <trkpt lat="45.4410" lon="10.6860"><ele>67</ele></trkpt>
+      <trkpt lat="45.4395" lon="10.6870"><ele>67</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

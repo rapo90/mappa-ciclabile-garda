@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Cycling Routes Test" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Giro delle Colline Moreniche</name>
+    <desc>Percorso misto attraverso le colline moreniche del Garda</desc>
+  </metadata>
+  <trk>
+    <name>Giro delle Colline Moreniche</name>
+    <type>cycling</type>
+    <trkseg>
+      <!-- Start: Sirmione area -->
+      <trkpt lat="45.4720" lon="10.6080"><ele>68</ele></trkpt>
+      <trkpt lat="45.4735" lon="10.6110"><ele>72</ele></trkpt>
+      <trkpt lat="45.4755" lon="10.6145"><ele>78</ele></trkpt>
+      <trkpt lat="45.4780" lon="10.6180"><ele>85</ele></trkpt>
+      <trkpt lat="45.4805" lon="10.6220"><ele>92</ele></trkpt>
+      <trkpt lat="45.4830" lon="10.6265"><ele>100</ele></trkpt>
+      <trkpt lat="45.4855" lon="10.6310"><ele>110</ele></trkpt>
+      <trkpt lat="45.4880" lon="10.6355"><ele>120</ele></trkpt>
+      <trkpt lat="45.4905" lon="10.6400"><ele>132</ele></trkpt>
+      <trkpt lat="45.4930" lon="10.6450"><ele>145</ele></trkpt>
+      <!-- Asphalt section - hills -->
+      <trkpt lat="45.4955" lon="10.6500"><ele>158</ele></trkpt>
+      <trkpt lat="45.4975" lon="10.6550"><ele>170</ele></trkpt>
+      <trkpt lat="45.4995" lon="10.6600"><ele>185</ele></trkpt>
+      <trkpt lat="45.5010" lon="10.6655"><ele>198</ele></trkpt>
+      <trkpt lat="45.5020" lon="10.6710"><ele>210</ele></trkpt>
+      <trkpt lat="45.5025" lon="10.6770"><ele>222</ele></trkpt>
+      <trkpt lat="45.5020" lon="10.6830"><ele>230</ele></trkpt>
+      <trkpt lat="45.5010" lon="10.6890"><ele>238</ele></trkpt>
+      <trkpt lat="45.4995" lon="10.6945"><ele>245</ele></trkpt>
+      <trkpt lat="45.4975" lon="10.7000"><ele>250</ele></trkpt>
+      <!-- Unpaved section - gravel roads -->
+      <trkpt lat="45.4950" lon="10.7050"><ele>248</ele></trkpt>
+      <trkpt lat="45.4925" lon="10.7095"><ele>242</ele></trkpt>
+      <trkpt lat="45.4895" lon="10.7135"><ele>235</ele></trkpt>
+      <trkpt lat="45.4865" lon="10.7170"><ele>225</ele></trkpt>
+      <trkpt lat="45.4830" lon="10.7200"><ele>215</ele></trkpt>
+      <trkpt lat="45.4795" lon="10.7225"><ele>205</ele></trkpt>
+      <trkpt lat="45.4760" lon="10.7245"><ele>195</ele></trkpt>
+      <trkpt lat="45.4720" lon="10.7260"><ele>185</ele></trkpt>
+      <trkpt lat="45.4680" lon="10.7270"><ele>175</ele></trkpt>
+      <trkpt lat="45.4640" lon="10.7275"><ele>165</ele></trkpt>
+      <!-- Trail section -->
+      <trkpt lat="45.4600" lon="10.7270"><ele>160</ele></trkpt>
+      <trkpt lat="45.4560" lon="10.7260"><ele>155</ele></trkpt>
+      <trkpt lat="45.4520" lon="10.7245"><ele>148</ele></trkpt>
+      <trkpt lat="45.4485" lon="10.7225"><ele>140</ele></trkpt>
+      <trkpt lat="45.4450" lon="10.7200"><ele>132</ele></trkpt>
+      <trkpt lat="45.4420" lon="10.7170"><ele>122</ele></trkpt>
+      <trkpt lat="45.4395" lon="10.7135"><ele>112</ele></trkpt>
+      <trkpt lat="45.4375" lon="10.7095"><ele>102</ele></trkpt>
+      <!-- Back to asphalt -->
+      <trkpt lat="45.4360" lon="10.7050"><ele>95</ele></trkpt>
+      <trkpt lat="45.4350" lon="10.7000"><ele>90</ele></trkpt>
+      <trkpt lat="45.4345" lon="10.6945"><ele>88</ele></trkpt>
+      <trkpt lat="45.4345" lon="10.6890"><ele>85</ele></trkpt>
+      <trkpt lat="45.4350" lon="10.6835"><ele>82</ele></trkpt>
+      <trkpt lat="45.4360" lon="10.6780"><ele>80</ele></trkpt>
+      <trkpt lat="45.4375" lon="10.6725"><ele>78</ele></trkpt>
+      <trkpt lat="45.4395" lon="10.6675"><ele>76</ele></trkpt>
+      <trkpt lat="45.4420" lon="10.6625"><ele>74</ele></trkpt>
+      <trkpt lat="45.4450" lon="10.6580"><ele>72</ele></trkpt>
+      <!-- Return section -->
+      <trkpt lat="45.4480" lon="10.6540"><ele>71</ele></trkpt>
+      <trkpt lat="45.4515" lon="10.6500"><ele>70</ele></trkpt>
+      <trkpt lat="45.4550" lon="10.6465"><ele>70</ele></trkpt>
+      <trkpt lat="45.4585" lon="10.6430"><ele>69</ele></trkpt>
+      <trkpt lat="45.4620" lon="10.6400"><ele>69</ele></trkpt>
+      <trkpt lat="45.4655" lon="10.6370"><ele>68</ele></trkpt>
+      <trkpt lat="45.4690" lon="10.6340"><ele>68</ele></trkpt>
+      <trkpt lat="45.4725" lon="10.6315"><ele>68</ele></trkpt>
+      <trkpt lat="45.4755" lon="10.6285"><ele>68</ele></trkpt>
+      <trkpt lat="45.4780" lon="10.6250"><ele>68</ele></trkpt>
+      <!-- Final approach -->
+      <trkpt lat="45.4800" lon="10.6210"><ele>68</ele></trkpt>
+      <trkpt lat="45.4810" lon="10.6170"><ele>68</ele></trkpt>
+      <trkpt lat="45.4810" lon="10.6130"><ele>68</ele></trkpt>
+      <trkpt lat="45.4800" lon="10.6095"><ele>68</ele></trkpt>
+      <trkpt lat="45.4780" lon="10.6065"><ele>68</ele></trkpt>
+      <trkpt lat="45.4755" lon="10.6045"><ele>68</ele></trkpt>
+      <trkpt lat="45.4730" lon="10.6055"><ele>68</ele></trkpt>
+      <trkpt lat="45.4720" lon="10.6080"><ele>68</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

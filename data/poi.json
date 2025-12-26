@@ -1,0 +1,69 @@
+{
+  "poi": [
+    {
+      "id": "poi-001",
+      "nome": {
+        "it": "Partenza Peschiera",
+        "en": "Peschiera Start"
+      },
+      "tipo": "partenza_arrivo",
+      "coordinate": [45.4395, 10.6870],
+      "nota": {
+        "it": "Punto di partenza principale vicino alla stazione ferroviaria",
+        "en": "Main starting point near the train station"
+      }
+    },
+    {
+      "id": "poi-002",
+      "nome": {
+        "it": "Belvedere Colline",
+        "en": "Hills Viewpoint"
+      },
+      "tipo": "vista",
+      "coordinate": [45.5025, 10.6770],
+      "nota": {
+        "it": "Punto panoramico con vista a 360° sulle colline moreniche e sul lago",
+        "en": "Panoramic viewpoint with 360° views of morainic hills and the lake"
+      }
+    },
+    {
+      "id": "poi-003",
+      "nome": {
+        "it": "Fontana del Borgo",
+        "en": "Village Fountain"
+      },
+      "tipo": "fontana",
+      "coordinate": [45.4850, 10.6740],
+      "nota": {
+        "it": "Fontana sempre attiva con acqua potabile fresca",
+        "en": "Always running fountain with fresh drinking water"
+      }
+    },
+    {
+      "id": "poi-004",
+      "nome": {
+        "it": "Trattoria del Ciclista",
+        "en": "Cyclist's Trattoria"
+      },
+      "tipo": "ristoro",
+      "coordinate": [45.4720, 10.6080],
+      "nota": {
+        "it": "Ristorante tipico con menù per ciclisti. Aperto 12-15 e 19-22",
+        "en": "Traditional restaurant with cyclist menu. Open 12-3pm and 7-10pm"
+      }
+    },
+    {
+      "id": "poi-005",
+      "nome": {
+        "it": "Ciclofficina Garda",
+        "en": "Garda Bike Shop"
+      },
+      "tipo": "bike_service",
+      "coordinate": [45.4650, 10.5450],
+      "nota": {
+        "it": "Assistenza e noleggio bici. Riparazioni rapide e ricambi",
+        "en": "Bike service and rental. Quick repairs and spare parts"
+      }
+    }
+  ]
+}
