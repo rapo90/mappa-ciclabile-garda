@@ -34,9 +34,9 @@ import urllib.error
 import urllib.parse
 
 # Configuration
-SAMPLE_DISTANCE_METERS = 100  # Sample a point every N meters
+SAMPLE_DISTANCE_METERS = 200  # Sample a point every N meters (increased for fewer API calls)
 OVERPASS_API_URL = "https://overpass-api.de/api/interpreter"
-OVERPASS_DELAY_SECONDS = 1.5  # Delay between API calls
+OVERPASS_DELAY_SECONDS = 2.0  # Delay between API calls (increased for stability)
 CACHE_FILE = "surface_cache.json"
 SEARCH_RADIUS_METERS = 30  # Search radius for nearby ways
 
@@ -155,8 +155,8 @@ def sample_points(points, sample_distance=SAMPLE_DISTANCE_METERS):
     return sampled
 
 
-def query_overpass(lat, lon, radius=SEARCH_RADIUS_METERS):
-    """Query Overpass API for ways near a point."""
+def query_overpass(lat, lon, radius=SEARCH_RADIUS_METERS, retries=3):
+    """Query Overpass API for ways near a point with retry logic."""
     query = f"""
     [out:json][timeout:25];
     (
@@ -165,27 +165,44 @@ def query_overpass(lat, lon, radius=SEARCH_RADIUS_METERS):
     out body;
     """
 
-    try:
-        data = urllib.parse.urlencode({'data': query}).encode('utf-8')
-        req = urllib.request.Request(
-            OVERPASS_API_URL,
-            data=data,
-            headers={'User-Agent': 'CyclingRoutesAnalyzer/1.0'}
-        )
+    for attempt in range(retries):
+        try:
+            data = urllib.parse.urlencode({'data': query}).encode('utf-8')
+            req = urllib.request.Request(
+                OVERPASS_API_URL,
+                data=data,
+                headers={'User-Agent': 'CyclingRoutesAnalyzer/1.0'}
+            )
 
-        with urllib.request.urlopen(req, timeout=30) as response:
-            result = json.loads(response.read().decode('utf-8'))
-            return result.get('elements', [])
+            with urllib.request.urlopen(req, timeout=30) as response:
+                result = json.loads(response.read().decode('utf-8'))
+                return result.get('elements', [])
 
-    except urllib.error.HTTPError as e:
-        if e.code == 429:
-            print(f"  Rate limited, waiting 60 seconds...")
-            time.sleep(60)
-            return query_overpass(lat, lon, radius)
-        raise
-    except Exception as e:
-        print(f"  Warning: Overpass query failed: {e}")
-        return []
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                wait_time = 60
+                print(f"  Rate limited (429), waiting {wait_time} seconds...")
+                time.sleep(wait_time)
+                continue
+            elif e.code in (500, 502, 503, 504):
+                wait_time = (attempt + 1) * 10  # 10s, 20s, 30s
+                print(f"  Server error ({e.code}), retry {attempt + 1}/{retries} in {wait_time}s...")
+                time.sleep(wait_time)
+                continue
+            else:
+                print(f"  Warning: HTTP error {e.code}: {e}")
+                return []
+        except urllib.error.URLError as e:
+            wait_time = (attempt + 1) * 5
+            print(f"  Network error, retry {attempt + 1}/{retries} in {wait_time}s...")
+            time.sleep(wait_time)
+            continue
+        except Exception as e:
+            print(f"  Warning: Overpass query failed: {e}")
+            return []
+
+    print(f"  Warning: Failed after {retries} retries, skipping point")
+    return []
 
 
 def classify_surface(ways):
@@ -324,13 +341,13 @@ def save_cache(cache_path, cache):
         json.dump(cache, f, indent=2)
 
 
-def analyze_route(gpx_path, cache, verbose=False):
+def analyze_route(gpx_path, cache, verbose=False, skip_api=False):
     """Analyze a single GPX file and return route data."""
     file_hash = get_file_hash(gpx_path)
     file_name = os.path.basename(gpx_path)
 
-    # Check cache
-    if file_name in cache and cache[file_name].get('hash') == file_hash:
+    # Check cache (skip if using skip_api mode)
+    if not skip_api and file_name in cache and cache[file_name].get('hash') == file_hash:
         if verbose:
             print(f"  Using cached data for {file_name}")
         return cache[file_name]['data']
@@ -351,46 +368,56 @@ def analyze_route(gpx_path, cache, verbose=False):
     if verbose:
         print(f"    {len(points)} points, sampled to {len(sampled)} points")
 
-    # Classify each sampled point
-    classifications = []
-    for i, sample in enumerate(sampled):
-        pt = sample['point']
-
-        if verbose and i > 0 and i % 10 == 0:
-            print(f"    Processed {i}/{len(sampled)} samples...")
-
-        ways = query_overpass(pt['lat'], pt['lon'])
-        classification = classify_surface(ways)
-        classifications.append({
-            'index': sample['index'],
-            'type': classification
-        })
-
-        # Rate limiting
-        time.sleep(OVERPASS_DELAY_SECONDS)
-
-    # Build segments from classifications
-    segments = []
-    if classifications:
-        current_type = classifications[0]['type']
-        current_start = classifications[0]['index']
-
-        for i in range(1, len(classifications)):
-            if classifications[i]['type'] != current_type:
-                segments.append({
-                    'da_indice': current_start,
-                    'a_indice': classifications[i]['index'],
-                    'tipo_fondo': current_type
-                })
-                current_type = classifications[i]['type']
-                current_start = classifications[i]['index']
-
-        # Add final segment
-        segments.append({
-            'da_indice': current_start,
+    # Skip API mode: mark entire route as asphalt
+    if skip_api:
+        if verbose:
+            print(f"    Skipping API calls (--skip-api mode)")
+        segments = [{
+            'da_indice': 0,
             'a_indice': len(points) - 1,
-            'tipo_fondo': current_type
-        })
+            'tipo_fondo': 'asphalt'
+        }]
+    else:
+        # Classify each sampled point using Overpass API
+        classifications = []
+        for i, sample in enumerate(sampled):
+            pt = sample['point']
+
+            if verbose and i > 0 and i % 10 == 0:
+                print(f"    Processed {i}/{len(sampled)} samples...")
+
+            ways = query_overpass(pt['lat'], pt['lon'])
+            classification = classify_surface(ways)
+            classifications.append({
+                'index': sample['index'],
+                'type': classification
+            })
+
+            # Rate limiting
+            time.sleep(OVERPASS_DELAY_SECONDS)
+
+        # Build segments from classifications
+        segments = []
+        if classifications:
+            current_type = classifications[0]['type']
+            current_start = classifications[0]['index']
+
+            for i in range(1, len(classifications)):
+                if classifications[i]['type'] != current_type:
+                    segments.append({
+                        'da_indice': current_start,
+                        'a_indice': classifications[i]['index'],
+                        'tipo_fondo': current_type
+                    })
+                    current_type = classifications[i]['type']
+                    current_start = classifications[i]['index']
+
+            # Add final segment
+            segments.append({
+                'da_indice': current_start,
+                'a_indice': len(points) - 1,
+                'tipo_fondo': current_type
+            })
 
     # Calculate statistics
     stats = calculate_stats(segments, len(points))
@@ -433,6 +460,8 @@ def main():
     parser.add_argument('--force', action='store_true', help='Ignore cache and reprocess all files')
     parser.add_argument('--verbose', '-v', action='store_true', help='Print detailed progress')
     parser.add_argument('--dry-run', action='store_true', help='Analyze but do not update routes.json')
+    parser.add_argument('--skip-api', action='store_true',
+                        help='Skip Overpass API calls, mark entire route as asphalt (fast mode)')
     args = parser.parse_args()
 
     # Determine paths
@@ -482,7 +511,7 @@ def main():
         print(f"Processing: {gpx_path.name}")
 
         try:
-            route_data = analyze_route(str(gpx_path), cache, args.verbose)
+            route_data = analyze_route(str(gpx_path), cache, args.verbose, args.skip_api)
             if route_data:
                 # Merge with existing data (preserve manual edits)
                 route_id = route_data['id']
