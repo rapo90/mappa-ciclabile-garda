@@ -159,8 +159,41 @@ def sample_points(points, sample_distance=SAMPLE_DISTANCE_METERS):
     return sampled
 
 
+def test_overpass_connectivity():
+    """Test if Overpass API servers are reachable. Returns True if at least one works."""
+    global current_server_index
+
+    # Simple test query
+    test_query = "[out:json][timeout:10];node(1);out;"
+
+    for server_idx, server_url in enumerate(OVERPASS_API_SERVERS):
+        try:
+            data = urllib.parse.urlencode({'data': test_query}).encode('utf-8')
+            req = urllib.request.Request(
+                server_url,
+                data=data,
+                headers={'User-Agent': 'CyclingRoutesAnalyzer/1.0'}
+            )
+
+            with urllib.request.urlopen(req, timeout=15) as response:
+                result = json.loads(response.read().decode('utf-8'))
+                if 'elements' in result:
+                    current_server_index = server_idx
+                    print(f"  API connectivity OK: {server_url.split('/')[2]}")
+                    return True
+        except Exception as e:
+            print(f"  Cannot reach {server_url.split('/')[2]}: {type(e).__name__}")
+
+    return False
+
+
 def query_overpass(lat, lon, radius=SEARCH_RADIUS_METERS, retries=2):
-    """Query Overpass API for ways near a point with server fallback."""
+    """Query Overpass API for ways near a point with server fallback.
+
+    Returns:
+        list: List of ways if successful
+        None: If all servers failed (indicates API connectivity problem)
+    """
     global current_server_index
 
     query = f"""
@@ -216,14 +249,26 @@ def query_overpass(lat, lon, radius=SEARCH_RADIUS_METERS, retries=2):
                 print(f"  Warning: Query failed: {e}")
                 break  # Try next server
 
-    print(f"  Warning: All servers failed, skipping point")
-    return []
+    # Return None to indicate API failure (different from empty result)
+    return None
 
 
 def classify_surface(ways):
-    """Classify the surface type based on OSM way data."""
-    if not ways:
-        return 'asphalt'  # Default to asphalt if no data
+    """Classify the surface type based on OSM way data.
+
+    Args:
+        ways: List of OSM ways, or None if API failed
+
+    Returns:
+        str: 'asphalt', 'unpaved', 'trail', or 'unknown' (if API failed)
+    """
+    # API failure - cannot determine surface
+    if ways is None:
+        return 'unknown'
+
+    # Empty result (no roads nearby) - assume asphalt as reasonable default
+    if len(ways) == 0:
+        return 'asphalt'
 
     # Score each way and pick the best match
     best_classification = None
@@ -291,6 +336,7 @@ def calculate_stats(segments, total_points):
     asphalt_points = 0
     unpaved_points = 0
     trail_points = 0
+    unknown_points = 0
 
     for seg in segments:
         points_in_segment = seg['a_indice'] - seg['da_indice']
@@ -298,18 +344,26 @@ def calculate_stats(segments, total_points):
             asphalt_points += points_in_segment
         elif seg['tipo_fondo'] == 'unpaved':
             unpaved_points += points_in_segment
-        else:
+        elif seg['tipo_fondo'] == 'trail':
             trail_points += points_in_segment
+        else:  # 'unknown'
+            unknown_points += points_in_segment
 
-    total = asphalt_points + unpaved_points + trail_points
+    total = asphalt_points + unpaved_points + trail_points + unknown_points
     if total == 0:
-        return {'asfalto_percent': 100, 'sterrato_percent': 0, 'sentiero_percent': 0}
+        return {'asfalto_percent': 100, 'sterrato_percent': 0, 'sentiero_percent': 0, 'sconosciuto_percent': 0}
 
-    return {
+    stats = {
         'asfalto_percent': round(asphalt_points / total * 100),
         'sterrato_percent': round(unpaved_points / total * 100),
-        'sentiero_percent': round(trail_points / total * 100)
+        'sentiero_percent': round(trail_points / total * 100),
     }
+
+    # Only include unknown if there are unknown segments
+    if unknown_points > 0:
+        stats['sconosciuto_percent'] = round(unknown_points / total * 100)
+
+    return stats
 
 
 def calculate_distance(points):
@@ -395,6 +449,9 @@ def analyze_route(gpx_path, cache, verbose=False, skip_api=False):
     else:
         # Classify each sampled point using Overpass API
         classifications = []
+        api_failures = 0
+        api_successes = 0
+
         for i, sample in enumerate(sampled):
             pt = sample['point']
 
@@ -402,6 +459,18 @@ def analyze_route(gpx_path, cache, verbose=False, skip_api=False):
                 print(f"    Processed {i}/{len(sampled)} samples...")
 
             ways = query_overpass(pt['lat'], pt['lon'])
+
+            # Track API success/failure
+            if ways is None:
+                api_failures += 1
+                # If first 3 calls all fail, API is likely unreachable
+                if api_failures >= 3 and api_successes == 0:
+                    print(f"  ERROR: Overpass API unreachable after {api_failures} attempts")
+                    print(f"  Please check your internet connection or try again later")
+                    return None
+            else:
+                api_successes += 1
+
             classification = classify_surface(ways)
             classifications.append({
                 'index': sample['index'],
@@ -410,6 +479,14 @@ def analyze_route(gpx_path, cache, verbose=False, skip_api=False):
 
             # Rate limiting
             time.sleep(OVERPASS_DELAY_SECONDS)
+
+        # Warn if many API calls failed
+        total_calls = api_failures + api_successes
+        if api_failures > 0:
+            failure_rate = api_failures / total_calls * 100
+            print(f"    API stats: {api_successes}/{total_calls} successful ({failure_rate:.0f}% failures)")
+            if failure_rate > 50:
+                print(f"    WARNING: High API failure rate - surface data may be inaccurate")
 
         # Build segments from classifications
         segments = []
@@ -509,6 +586,23 @@ def main():
     print(f"Found {len(gpx_files)} GPX files")
     print()
 
+    # Test API connectivity (unless skipping API)
+    if not args.skip_api:
+        print("Testing Overpass API connectivity...")
+        if not test_overpass_connectivity():
+            print()
+            print("ERROR: Cannot connect to any Overpass API server!")
+            print("Possible causes:")
+            print("  - No internet connection")
+            print("  - Firewall/proxy blocking access")
+            print("  - All Overpass servers are down")
+            print()
+            print("Options:")
+            print("  - Check your internet connection and try again")
+            print("  - Use --skip-api to skip surface analysis (will mark all as asphalt)")
+            sys.exit(1)
+        print()
+
     # Load existing routes.json for merging
     existing_routes = {}
     if routes_file.exists():
@@ -543,9 +637,13 @@ def main():
                 analyzed_routes.append(route_data)
                 print(f"  Distance: {route_data['distanza_km']} km")
                 print(f"  Elevation: {route_data['dislivello_positivo']} m")
-                print(f"  Surface: {route_data['stats_fondo']['asfalto_percent']}% asphalt, "
-                      f"{route_data['stats_fondo']['sterrato_percent']}% unpaved, "
-                      f"{route_data['stats_fondo']['sentiero_percent']}% trail")
+                stats = route_data['stats_fondo']
+                surface_info = (f"  Surface: {stats['asfalto_percent']}% asphalt, "
+                               f"{stats['sterrato_percent']}% unpaved, "
+                               f"{stats['sentiero_percent']}% trail")
+                if stats.get('sconosciuto_percent', 0) > 0:
+                    surface_info += f", {stats['sconosciuto_percent']}% unknown"
+                print(surface_info)
         except Exception as e:
             print(f"  Error: {e}")
             if args.verbose:
