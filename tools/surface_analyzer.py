@@ -35,10 +35,14 @@ import urllib.parse
 
 # Configuration
 SAMPLE_DISTANCE_METERS = 200  # Sample a point every N meters (increased for fewer API calls)
-OVERPASS_API_URL = "https://overpass-api.de/api/interpreter"
+OVERPASS_API_SERVERS = [
+    "https://overpass.private.coffee/api/interpreter",  # Primary: private.coffee
+    "https://overpass-api.de/api/interpreter",          # Fallback: official
+]
 OVERPASS_DELAY_SECONDS = 2.0  # Delay between API calls (increased for stability)
 CACHE_FILE = "surface_cache.json"
 SEARCH_RADIUS_METERS = 30  # Search radius for nearby ways
+current_server_index = 0  # Track which server we're using
 
 # Surface classification rules
 ASPHALT_SURFACES = {'asphalt', 'paved', 'concrete', 'paving_stones', 'sett', 'cobblestone'}
@@ -155,8 +159,10 @@ def sample_points(points, sample_distance=SAMPLE_DISTANCE_METERS):
     return sampled
 
 
-def query_overpass(lat, lon, radius=SEARCH_RADIUS_METERS, retries=3):
-    """Query Overpass API for ways near a point with retry logic."""
+def query_overpass(lat, lon, radius=SEARCH_RADIUS_METERS, retries=2):
+    """Query Overpass API for ways near a point with server fallback."""
+    global current_server_index
+
     query = f"""
     [out:json][timeout:25];
     (
@@ -165,43 +171,52 @@ def query_overpass(lat, lon, radius=SEARCH_RADIUS_METERS, retries=3):
     out body;
     """
 
-    for attempt in range(retries):
-        try:
-            data = urllib.parse.urlencode({'data': query}).encode('utf-8')
-            req = urllib.request.Request(
-                OVERPASS_API_URL,
-                data=data,
-                headers={'User-Agent': 'CyclingRoutesAnalyzer/1.0'}
-            )
+    # Try each server
+    for server_idx in range(len(OVERPASS_API_SERVERS)):
+        # Start with current preferred server, then try others
+        actual_idx = (current_server_index + server_idx) % len(OVERPASS_API_SERVERS)
+        server_url = OVERPASS_API_SERVERS[actual_idx]
 
-            with urllib.request.urlopen(req, timeout=30) as response:
-                result = json.loads(response.read().decode('utf-8'))
-                return result.get('elements', [])
+        for attempt in range(retries):
+            try:
+                data = urllib.parse.urlencode({'data': query}).encode('utf-8')
+                req = urllib.request.Request(
+                    server_url,
+                    data=data,
+                    headers={'User-Agent': 'CyclingRoutesAnalyzer/1.0'}
+                )
 
-        except urllib.error.HTTPError as e:
-            if e.code == 429:
-                wait_time = 60
-                print(f"  Rate limited (429), waiting {wait_time} seconds...")
-                time.sleep(wait_time)
-                continue
-            elif e.code in (500, 502, 503, 504):
-                wait_time = (attempt + 1) * 10  # 10s, 20s, 30s
-                print(f"  Server error ({e.code}), retry {attempt + 1}/{retries} in {wait_time}s...")
-                time.sleep(wait_time)
-                continue
-            else:
-                print(f"  Warning: HTTP error {e.code}: {e}")
-                return []
-        except urllib.error.URLError as e:
-            wait_time = (attempt + 1) * 5
-            print(f"  Network error, retry {attempt + 1}/{retries} in {wait_time}s...")
-            time.sleep(wait_time)
-            continue
-        except Exception as e:
-            print(f"  Warning: Overpass query failed: {e}")
-            return []
+                with urllib.request.urlopen(req, timeout=30) as response:
+                    result = json.loads(response.read().decode('utf-8'))
+                    # Success! Update preferred server
+                    if actual_idx != current_server_index:
+                        print(f"  Switched to server: {server_url}")
+                        current_server_index = actual_idx
+                    return result.get('elements', [])
 
-    print(f"  Warning: Failed after {retries} retries, skipping point")
+            except urllib.error.HTTPError as e:
+                if e.code == 429:
+                    print(f"  Rate limited (429) on {server_url.split('/')[2]}, trying next server...")
+                    break  # Try next server immediately
+                elif e.code in (500, 502, 503, 504):
+                    if attempt < retries - 1:
+                        wait_time = (attempt + 1) * 5
+                        print(f"  Server error ({e.code}), retry {attempt + 1}/{retries} in {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        print(f"  Server {server_url.split('/')[2]} failed, trying next...")
+                        break  # Try next server
+                else:
+                    print(f"  Warning: HTTP error {e.code}: {e}")
+                    break  # Try next server
+            except urllib.error.URLError as e:
+                print(f"  Network error on {server_url.split('/')[2]}, trying next server...")
+                break  # Try next server
+            except Exception as e:
+                print(f"  Warning: Query failed: {e}")
+                break  # Try next server
+
+    print(f"  Warning: All servers failed, skipping point")
     return []
 
 
