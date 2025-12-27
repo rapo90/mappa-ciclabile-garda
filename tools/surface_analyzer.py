@@ -12,11 +12,13 @@ This script:
 5. Updates routes.json with surface data
 
 Usage:
-    python surface_analyzer.py [--force] [--verbose]
+    python surface_analyzer.py [--force] [--verbose] [--sync]
 
 Options:
     --force     Reprocess all files, ignoring cache
     --verbose   Print detailed progress information
+    --sync      Only process new GPX files not yet in routes.json
+                (leaves manual fields empty for user to fill in later)
 """
 
 import os
@@ -356,8 +358,16 @@ def save_cache(cache_path, cache):
         json.dump(cache, f, indent=2)
 
 
-def analyze_route(gpx_path, cache, verbose=False, skip_api=False):
-    """Analyze a single GPX file and return route data."""
+def analyze_route(gpx_path, cache, verbose=False, skip_api=False, is_new_file=False):
+    """Analyze a single GPX file and return route data.
+
+    Args:
+        gpx_path: Path to the GPX file
+        cache: Cache dictionary for storing analysis results
+        verbose: Print detailed progress
+        skip_api: Skip Overpass API calls (mark entire route as asphalt)
+        is_new_file: If True, leave manual fields empty for user to fill in later
+    """
     file_hash = get_file_hash(gpx_path)
     file_name = os.path.basename(gpx_path)
 
@@ -439,26 +449,50 @@ def analyze_route(gpx_path, cache, verbose=False, skip_api=False):
     distance = calculate_distance(points)
     elevation = calculate_elevation_gain(points)
 
-    route_data = {
-        'id': Path(gpx_path).stem,
-        'nome': {
-            'it': name,
-            'en': name
-        },
-        'file_gpx': file_name,
-        'colore': None,
-        'distanza_km': distance,
-        'dislivello_positivo': elevation,
-        'stats_fondo': stats,
-        'segmenti': segments,
-        'info_extra': {
-            'difficolta': 'media' if stats['sentiero_percent'] > 0 else ('facile' if stats['sterrato_percent'] == 0 else 'media'),
-            'nota': {
-                'it': '',
-                'en': ''
+    # For new files, leave manual fields empty for user to fill in later
+    if is_new_file:
+        route_data = {
+            'id': Path(gpx_path).stem,
+            'nome': {
+                'it': '',  # To be filled manually
+                'en': ''   # To be filled manually
+            },
+            'file_gpx': file_name,
+            'colore': None,  # Will be assigned from palette
+            'distanza_km': distance,
+            'dislivello_positivo': elevation,
+            'stats_fondo': stats,
+            'segmenti': segments,
+            'info_extra': {
+                'difficolta': 'media' if stats['sentiero_percent'] > 0 else ('facile' if stats['sterrato_percent'] == 0 else 'media'),
+                'tempo_stimato': '',  # To be filled manually
+                'nota': {
+                    'it': '',  # To be filled manually
+                    'en': ''   # To be filled manually
+                }
             }
         }
-    }
+    else:
+        route_data = {
+            'id': Path(gpx_path).stem,
+            'nome': {
+                'it': name,
+                'en': name
+            },
+            'file_gpx': file_name,
+            'colore': None,
+            'distanza_km': distance,
+            'dislivello_positivo': elevation,
+            'stats_fondo': stats,
+            'segmenti': segments,
+            'info_extra': {
+                'difficolta': 'media' if stats['sentiero_percent'] > 0 else ('facile' if stats['sterrato_percent'] == 0 else 'media'),
+                'nota': {
+                    'it': '',
+                    'en': ''
+                }
+            }
+        }
 
     # Update cache
     cache[file_name] = {
@@ -477,6 +511,8 @@ def main():
     parser.add_argument('--dry-run', action='store_true', help='Analyze but do not update routes.json')
     parser.add_argument('--skip-api', action='store_true',
                         help='Skip Overpass API calls, mark entire route as asphalt (fast mode)')
+    parser.add_argument('--sync', action='store_true',
+                        help='Only process new GPX files not yet in routes.json (leaves manual fields empty)')
     args = parser.parse_args()
 
     # Determine paths
@@ -511,34 +547,63 @@ def main():
 
     # Load existing routes.json for merging
     existing_routes = {}
+    existing_routes_list = []
     if routes_file.exists():
         try:
             with open(routes_file, 'r') as f:
                 data = json.load(f)
-                for route in data.get('routes', []):
+                existing_routes_list = data.get('routes', [])
+                for route in existing_routes_list:
                     existing_routes[route['id']] = route
         except Exception as e:
             print(f"Warning: Could not load existing routes.json: {e}")
 
+    # In sync mode, only process new GPX files
+    if args.sync:
+        existing_gpx_files = {route.get('file_gpx') for route in existing_routes.values()}
+        new_gpx_files = [gpx for gpx in gpx_files if gpx.name not in existing_gpx_files]
+
+        if not new_gpx_files:
+            print("No new GPX files to sync")
+            print("All GPX files are already in routes.json")
+            return
+
+        print(f"Sync mode: Found {len(new_gpx_files)} new GPX file(s) to add")
+        print()
+        gpx_files = new_gpx_files
+
     # Analyze each GPX file
     analyzed_routes = []
+    new_routes_count = 0
     for gpx_path in sorted(gpx_files):
-        print(f"Processing: {gpx_path.name}")
+        route_id = gpx_path.stem
+        is_new_file = route_id not in existing_routes
+
+        if args.sync and not is_new_file:
+            # In sync mode, skip existing routes
+            continue
+
+        status = "[NEW]" if is_new_file else "[UPDATE]"
+        print(f"Processing: {gpx_path.name} {status}")
 
         try:
-            route_data = analyze_route(str(gpx_path), cache, args.verbose, args.skip_api)
+            route_data = analyze_route(str(gpx_path), cache, args.verbose, args.skip_api, is_new_file)
             if route_data:
-                # Merge with existing data (preserve manual edits)
-                route_id = route_data['id']
-                if route_id in existing_routes:
+                # Merge with existing data (preserve manual edits) for non-new files
+                if route_id in existing_routes and not is_new_file:
                     existing = existing_routes[route_id]
                     # Preserve color and manual notes
                     if existing.get('colore'):
                         route_data['colore'] = existing['colore']
                     if existing.get('info_extra', {}).get('nota', {}).get('it'):
                         route_data['info_extra']['nota'] = existing['info_extra']['nota']
+                    if existing.get('info_extra', {}).get('tempo_stimato'):
+                        route_data['info_extra']['tempo_stimato'] = existing['info_extra']['tempo_stimato']
                     if existing.get('nome', {}).get('it') != existing.get('nome', {}).get('en'):
                         route_data['nome'] = existing['nome']
+
+                if is_new_file:
+                    new_routes_count += 1
 
                 analyzed_routes.append(route_data)
                 print(f"  Distance: {route_data['distanza_km']} km")
@@ -546,6 +611,8 @@ def main():
                 print(f"  Surface: {route_data['stats_fondo']['asfalto_percent']}% asphalt, "
                       f"{route_data['stats_fondo']['sterrato_percent']}% unpaved, "
                       f"{route_data['stats_fondo']['sentiero_percent']}% trail")
+                if is_new_file:
+                    print(f"  Note: Manual fields left empty (nome, tempo_stimato, nota)")
         except Exception as e:
             print(f"  Error: {e}")
             if args.verbose:
@@ -562,26 +629,50 @@ def main():
         return
 
     # Update routes.json
-    output = {
-        'routes': analyzed_routes,
-        'palette_default': [
-            "#E63946", "#F4A261", "#2A9D8F", "#264653", "#8338EC",
-            "#FF006E", "#3A86FF", "#06D6A0", "#FFD166", "#118AB2"
-        ]
-    }
+    palette = [
+        "#E63946", "#F4A261", "#2A9D8F", "#264653", "#8338EC",
+        "#FF006E", "#3A86FF", "#06D6A0", "#FFD166", "#118AB2"
+    ]
+
+    # In sync mode, merge new routes with existing ones
+    if args.sync:
+        # Keep existing routes and add new ones
+        final_routes = existing_routes_list.copy()
+        for new_route in analyzed_routes:
+            final_routes.append(new_route)
+        output = {
+            'routes': final_routes,
+            'palette_default': palette
+        }
+    else:
+        output = {
+            'routes': analyzed_routes,
+            'palette_default': palette
+        }
 
     # Assign colors to routes without one
+    # First, find which colors are already used
+    used_colors = {route.get('colore') for route in output['routes'] if route.get('colore')}
+    available_colors = [c for c in palette if c not in used_colors]
+
     color_index = 0
     for route in output['routes']:
         if not route['colore']:
-            route['colore'] = output['palette_default'][color_index % len(output['palette_default'])]
+            if available_colors:
+                route['colore'] = available_colors[color_index % len(available_colors)]
+            else:
+                route['colore'] = palette[color_index % len(palette)]
             color_index += 1
 
     with open(routes_file, 'w') as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
     print(f"Updated {routes_file}")
-    print(f"Analyzed {len(analyzed_routes)} routes")
+    if args.sync:
+        print(f"Added {new_routes_count} new route(s)")
+        print(f"Total routes: {len(output['routes'])}")
+    else:
+        print(f"Analyzed {len(analyzed_routes)} routes")
 
 
 if __name__ == '__main__':
