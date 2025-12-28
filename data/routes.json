@@ -8,8 +8,8 @@
       },
       "file_gpx": "percorso-001.gpx",
       "colore": "#E63946",
-      "distanza_km": 20.5,
-      "dislivello_positivo": 185,
+      "distanza_km": 13.7,
+      "dislivello_positivo": 47,
       "stats_fondo": {
         "asfalto_percent": 100,
         "sterrato_percent": 0,
@@ -18,13 +18,12 @@
       "segmenti": [
         {
           "da_indice": 0,
-          "a_indice": 40,
+          "a_indice": 39,
           "tipo_fondo": "asphalt"
         }
       ],
       "info_extra": {
         "difficolta": "facile",
-        "tempo_stimato": "1h 15min",
         "nota": {
           "it": "Percorso interamente asfaltato, adatto a tutti. Vista panoramica sul lago nella parte nord.",
           "en": "Fully paved route, suitable for everyone. Panoramic lake view in the northern section."
@@ -39,38 +38,22 @@
       },
       "file_gpx": "percorso-002.gpx",
       "colore": "#2A9D8F",
-      "distanza_km": 35.2,
-      "dislivello_positivo": 520,
+      "distanza_km": 27.6,
+      "dislivello_positivo": 182,
       "stats_fondo": {
-        "asfalto_percent": 50,
-        "sterrato_percent": 30,
-        "sentiero_percent": 20
+        "asfalto_percent": 100,
+        "sterrato_percent": 0,
+        "sentiero_percent": 0
       },
       "segmenti": [
         {
           "da_indice": 0,
-          "a_indice": 20,
-          "tipo_fondo": "asphalt"
-        },
-        {
-          "da_indice": 20,
-          "a_indice": 30,
-          "tipo_fondo": "unpaved"
-        },
-        {
-          "da_indice": 30,
-          "a_indice": 38,
-          "tipo_fondo": "trail"
-        },
-        {
-          "da_indice": 38,
-          "a_indice": 68,
+          "a_indice": 65,
           "tipo_fondo": "asphalt"
         }
       ],
       "info_extra": {
-        "difficolta": "media",
-        "tempo_stimato": "2h 30min",
+        "difficolta": "facile",
         "nota": {
           "it": "Percorso vario attraverso le colline moreniche. Tratto sterrato con ghiaia fine, sentiero panoramico al km 18.",
           "en": "Varied route through morainic hills. Unpaved section with fine gravel, panoramic trail at km 18."
@@ -85,38 +68,22 @@
       },
       "file_gpx": "percorso-003.gpx",
       "colore": "#F4A261",
-      "distanza_km": 42.8,
-      "dislivello_positivo": 380,
+      "distanza_km": 37.1,
+      "dislivello_positivo": 97,
       "stats_fondo": {
-        "asfalto_percent": 60,
-        "sterrato_percent": 25,
-        "sentiero_percent": 15
+        "asfalto_percent": 100,
+        "sterrato_percent": 0,
+        "sentiero_percent": 0
       },
       "segmenti": [
         {
           "da_indice": 0,
-          "a_indice": 26,
-          "tipo_fondo": "asphalt"
-        },
-        {
-          "da_indice": 26,
-          "a_indice": 37,
-          "tipo_fondo": "trail"
-        },
-        {
-          "da_indice": 37,
-          "a_indice": 48,
-          "tipo_fondo": "unpaved"
-        },
-        {
-          "da_indice": 48,
-          "a_indice": 72,
+          "a_indice": 83,
           "tipo_fondo": "asphalt"
         }
       ],
       "info_extra": {
-        "difficolta": "media",
-        "tempo_stimato": "3h",
+        "difficolta": "facile",
         "nota": {
           "it": "Lungo percorso costiero con tratti condivisi con altri itinerari. Bellissime viste sul lago.",
           "en": "Long coastal route with shared sections with other routes. Beautiful lake views."
@@ -125,7 +92,15 @@
     }
   ],
   "palette_default": [
-    "#E63946", "#F4A261", "#2A9D8F", "#264653", "#8338EC",
-    "#FF006E", "#3A86FF", "#06D6A0", "#FFD166", "#118AB2"
+    "#E63946",
+    "#F4A261",
+    "#2A9D8F",
+    "#264653",
+    "#8338EC",
+    "#FF006E",
+    "#3A86FF",
+    "#06D6A0",
+    "#FFD166",
+    "#118AB2"
   ]
 }
